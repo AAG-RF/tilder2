@@ -37,8 +37,12 @@ export async function POST(req: NextRequest) {
         const interpreted = openaiData.choices?.[0]?.message?.content || "No simplified version available.";
 
         return NextResponse.json({ summary: interpreted });
-    } catch (err) {
-        console.error("Interpretation error:", err);
-        return NextResponse.json({ error: "Failed to simplify summary." }, { status: 500 });
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+            console.error("Error:", err.message);
+            return NextResponse.json({ error: err.message }, { status: 500 });
+        }
+        return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
     }
+
 }

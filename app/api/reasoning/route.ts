@@ -40,11 +40,12 @@ export async function POST(req: NextRequest) {
             "No summary generated.";
 
         return NextResponse.json({ summary });
-    } catch (err) {
-        console.error("❌ Reasoning model failed:", err);
-        return NextResponse.json(
-            { error: "Failed to extract insights." },
-            { status: 500 },
-        );
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+            console.error("Error:", err.message);
+            return NextResponse.json({ error: err.message }, { status: 500 });
+        }
+        return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
     }
+
 }

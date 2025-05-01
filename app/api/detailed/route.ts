@@ -37,8 +37,11 @@ export async function POST(req: NextRequest) {
         const expanded = openaiData.choices?.[0]?.message?.content || "No elaboration available.";
 
         return NextResponse.json({ summary: expanded });
-    } catch (err) {
-        console.error("Expansion error:", err);
-        return NextResponse.json({ error: "Failed to expand summary." }, { status: 500 });
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+            console.error("Error:", err.message);
+            return NextResponse.json({ error: err.message }, { status: 500 });
+        }
+        return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
     }
 }

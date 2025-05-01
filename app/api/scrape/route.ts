@@ -51,12 +51,11 @@ export async function POST(req: NextRequest) {
         }
 
         return NextResponse.json({ content, status: "retrieved" });
-    } catch (err: any) {
-        if (err.name === "AbortError") {
-            console.error("❌ Request timed out");
-            return NextResponse.json({ error: "Request timed out. Please try again." }, { status: 504 });
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+            console.error("Error:", err.message);
+            return NextResponse.json({ error: err.message }, { status: 500 });
         }
-
         console.error("❌ Content scrape error:", err);
         return NextResponse.json({ error: "An unexpected error occurred." }, { status: 500 });
     }
