@@ -19,10 +19,21 @@ export default function Home() {
   const [theme, setTheme] = useState("light");
 
   useEffect(() => {
+    const stored = localStorage.getItem("tilder-theme");
     const match = window.matchMedia("(prefers-color-scheme: dark)");
-    setTheme(match.matches ? "dark" : "light");
-    match.addEventListener("change", e => setTheme(e.matches ? "dark" : "light"));
-    return () => match.removeEventListener("change", e => setTheme(e.matches ? "dark" : "light"));
+    const preferred = stored || (match.matches ? "dark" : "light");
+    document.documentElement.classList.toggle("dark", preferred === "dark");
+    setTheme(preferred);
+
+    const listener = (e: MediaQueryListEvent) => {
+      if (!stored) {
+        const newTheme = e.matches ? "dark" : "light";
+        document.documentElement.classList.toggle("dark", newTheme === "dark");
+        setTheme(newTheme);
+      }
+    };
+    match.addEventListener("change", listener);
+    return () => match.removeEventListener("change", listener);
   }, []);
 
   const handleSummarize = async (wordLimit: number) => {
@@ -140,7 +151,20 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen w-full bg-background text-foreground transition-colors px-6 py-12 flex flex-col items-center justify-center gap-12">
+    <main className="min-h-screen w-full bg-background text-foreground transition-colors px-6 py-12 flex flex-col items-center justify-center gap-12 relative">
+      <Button
+        variant="ghost"
+        className="absolute top-6 right-6"
+        onClick={() => {
+          const newTheme = theme === "dark" ? "light" : "dark";
+          document.documentElement.classList.toggle("dark", newTheme === "dark");
+          setTheme(newTheme);
+          localStorage.setItem("tilder-theme", newTheme);
+        }}
+      >
+        {theme === "dark" ? "🌞 Light Mode" : "🌙 Dark Mode"}
+      </Button>
+
       <div className="w-full max-w-6xl space-y-6 text-center">
         <h1 className="text-5xl font-bold tracking-tight sm:text-6xl">TiLDeR</h1>
         <p className="text-xl text-muted-foreground italic">Understand more by reading less.</p>
@@ -199,14 +223,9 @@ export default function Home() {
               <Button variant="outline" onClick={handleCopy}>
                 {copied ? "✅ Copied" : "📋 Copy Summary"}
               </Button>
-              <div className="relative group">
-                <Button variant="outline" onClick={handleReason}>
-                  🤔 Extract Key Insights
-                </Button>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs rounded-md bg-gray-900 text-white text-xs px-3 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 pointer-events-none">
-                  Uses advanced reasoning to remove fluff and extract the most insightful ideas from the content.
-                </div>
-              </div>
+              <Button variant="outline" onClick={handleReason}>
+                🤔 Extract Key Insights
+              </Button>
               {interpretCount >= 5 && (
                 <Button
                   variant="outline"
