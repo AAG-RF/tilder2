@@ -40,7 +40,7 @@ export default function Home() {
     setError("");
     setLength(wordLimit);
     setStatusMessage("Retrieving content from the page...");
-
+  
     try {
       const scrapeRes = await fetch("/api/scrape", {
         method: "POST",
@@ -51,17 +51,17 @@ export default function Home() {
       if (!scrapeRes.ok) throw new Error(scrapeData.error || "Failed to retrieve content.");
       const rawContent = scrapeData.content;
       setContent(rawContent);
-      setStatusMessage("Content retrieved. Summarizing now...");
-
-      const summarizeRes = await fetch("/api/summarize-from-content", {
+      setStatusMessage("Content retrieved. Extracting key insights...");
+  
+      const reasoningRes = await fetch("/api/reasoning", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: rawContent, length: wordLimit }),
+        body: JSON.stringify({ content: rawContent }),
       });
-      const summaryData = await summarizeRes.json();
-      if (!summarizeRes.ok) throw new Error(summaryData.error || "Failed to summarize content.");
-
-      setSummary(summaryData.summary);
+      const reasoningData = await reasoningRes.json();
+      if (!reasoningRes.ok) throw new Error(reasoningData.error || "Reasoning failed.");
+  
+      setSummary(reasoningData.summary);
       setStatusMessage("");
       setInterpretCount(0);
       setCopied(false);
@@ -74,6 +74,7 @@ export default function Home() {
       setStatusMessage("");
     }
   };
+  
 
   const handleInterpret = async () => {
     if (!summary) return;
