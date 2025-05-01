@@ -11,7 +11,6 @@ import { analyzeReadability } from "@/lib/readability";
 export default function Home() {
   const [url, setUrl] = useState("");
   const [summary, setSummary] = useState("");
-  const [content, setContent] = useState("");
   const [error, setError] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [interpretCount, setInterpretCount] = useState(0);
@@ -49,8 +48,7 @@ export default function Home() {
       });
       const scrapeData = await scrapeRes.json();
       if (!scrapeRes.ok) throw new Error(scrapeData.error || "Failed to retrieve content.");
-      const rawContent = scrapeData.content;
-      setContent(rawContent);
+      const rawContent = scrapeData.content;   
       setStatusMessage("Content retrieved. Extracting key insights...");
 
       const reasoningRes = await fetch("/api/reasoning", {
@@ -109,7 +107,6 @@ export default function Home() {
   const handleReset = () => {
     setUrl("");
     setSummary("");
-    setContent("");
     setError("");
     setStatusMessage("");
     setInterpretCount(0);
