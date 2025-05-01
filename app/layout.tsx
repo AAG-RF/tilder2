@@ -1,4 +1,3 @@
-// layout.tsx - refactored for TiLDeR branding
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -13,10 +12,34 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "TiLDeR - Read Less, Know More",
-  description: "Summarize the web at the speed of thought.",
+export const metadata = {
+  title: "TiLDeR – Understand More by Reading Less",
+  description: "Summarize any article in seconds using AI-powered clarity, insight, and brevity.",
+  openGraph: {
+    title: "TiLDeR",
+    description: "Understand more by reading less. Summarize articles in seconds.",
+    url: "https://tilder.site",
+    siteName: "TiLDeR",
+    images: [
+      {
+        url: "/ogImage.png", 
+        width: 1200,
+        height: 630,
+        alt: "TiLDeR – Understand more by reading less",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TiLDeR",
+    description: "Summarize smarter. Get to the point faster.",
+    images: ["https://tilder.site/og-image.png"],
+    creator: "@ZKakler",
+  },
 };
+
 
 export default function RootLayout({
   children,
