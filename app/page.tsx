@@ -74,7 +74,7 @@ export default function Home() {
     } catch (err: unknown) {
       clearTimeout(timeout);
       if (err instanceof DOMException && err.name === "AbortError") {
-        setError("⏱ This article took too long to analyze. Perhaps it is too large to process? Try a shorter page until I can find a way to go as fast as Sonic ⏩👟🔵");
+        setError("⏱ This article took too long to analyze. Perhaps it is too large to process? Try a shorter page until I can find a way around this limitation");
       } else if (err instanceof Error) {
         setError(err.message);
       } else {
