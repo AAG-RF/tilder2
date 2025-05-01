@@ -39,32 +39,43 @@ export default function Home() {
     setSummary("");
     setError("");
     setStatusMessage("Retrieving content from the page...");
-
+  
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
+  
     try {
       const scrapeRes = await fetch("/api/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       });
+  
       const scrapeData = await scrapeRes.json();
       if (!scrapeRes.ok) throw new Error(scrapeData.error || "Failed to retrieve content.");
-      const rawContent = scrapeData.content;   
+      const rawContent = scrapeData.content;
       setStatusMessage("Content retrieved. Extracting key insights...");
-
+  
       const reasoningRes = await fetch("/api/reasoning", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: rawContent }),
+        signal: controller.signal,
       });
+  
+      clearTimeout(timeout);
+  
       const reasoningData = await reasoningRes.json();
       if (!reasoningRes.ok) throw new Error(reasoningData.error || "Reasoning failed.");
-
+  
       setSummary(reasoningData.summary);
       setStatusMessage("");
       setInterpretCount(0);
       setCopied(false);
     } catch (err: unknown) {
-      if (err instanceof Error) {
+      clearTimeout(timeout);
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setError("⏱ This article took too long to analyze. Perhaps it is too large to process? Try a shorter page until I can find a way to go as fast as Sonic ⏩👟🔵");
+      } else if (err instanceof Error) {
         setError(err.message);
       } else {
         setError("Unexpected error.");
