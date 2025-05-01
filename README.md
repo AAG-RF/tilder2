@@ -1,6 +1,6 @@
-# TiLDeR — Understand More by Reading Less
+# **T**i**LD**e**R** — Understand More by Reading Less
 
-TiLDeR is a minimalist web app that lets you quickly summarize any article, report, or essay from the web using Firecrawl for scraping and OpenAI for summarization.
+**T**i**LD**e**R**  (TL; DR: - Too Long; Didn't Read:) is a minimalist web app that lets you quickly summarize any article, report, or essay from the web using Firecrawl for scraping and OpenAI for summarization.
 
 ## ✨ Features
 
