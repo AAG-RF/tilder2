@@ -94,6 +94,30 @@ export default function Home() {
     }
   };
 
+  const handleReason = async () => {
+    if (!content) return;
+    setLoading(true);
+    setStatusMessage("Analyzing content deeply...");
+    try {
+      const res = await fetch("/api/reasoning", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Reasoning failed.");
+
+      setSummary(data.summary);
+      setStatusMessage("");
+      setCopied(false);
+    } catch (err: any) {
+      setError(err.message || "Failed to reason over content.");
+      setStatusMessage("");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleReset = () => {
     setUrl("");
     setSummary("");
@@ -175,6 +199,14 @@ export default function Home() {
               <Button variant="outline" onClick={handleCopy}>
                 {copied ? "✅ Copied" : "📋 Copy Summary"}
               </Button>
+              <div className="relative group">
+                <Button variant="outline" onClick={handleReason}>
+                  🤔 Extract Key Insights
+                </Button>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs rounded-md bg-gray-900 text-white text-xs px-3 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 pointer-events-none">
+                  Uses advanced reasoning to remove fluff and extract the most insightful ideas from the content.
+                </div>
+              </div>
               {interpretCount >= 5 && (
                 <Button
                   variant="outline"
