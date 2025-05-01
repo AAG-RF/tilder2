@@ -1,6 +1,6 @@
 "use client";
 import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ export default function Home() {
     setError("");
     setLength(wordLimit);
     setStatusMessage("Retrieving content from the page...");
-  
+
     try {
       const scrapeRes = await fetch("/api/scrape", {
         method: "POST",
@@ -53,7 +53,7 @@ export default function Home() {
       const rawContent = scrapeData.content;
       setContent(rawContent);
       setStatusMessage("Content retrieved. Extracting key insights...");
-  
+
       const reasoningRes = await fetch("/api/reasoning", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -61,7 +61,7 @@ export default function Home() {
       });
       const reasoningData = await reasoningRes.json();
       if (!reasoningRes.ok) throw new Error(reasoningData.error || "Reasoning failed.");
-  
+
       setSummary(reasoningData.summary);
       setStatusMessage("");
       setInterpretCount(0);
@@ -75,7 +75,6 @@ export default function Home() {
       setStatusMessage("");
     }
   };
-  
 
   const handleInterpret = async () => {
     if (!summary) return;
@@ -196,25 +195,6 @@ export default function Home() {
         {error && <p className="text-red-500 font-mono text-center">⚠️ {error}</p>}
         {summary && (
           <>
-            <Card>
-              <CardContent className="p-6 whitespace-pre-wrap text-left text-lg">
-                {summary}
-              </CardContent>
-            </Card>
-            <div className="text-sm text-muted-foreground text-center">
-              {(() => {
-                const { grade, words } = analyzeReadability(summary);
-                const clarity =
-                  grade <= 7
-                    ? "Very easy to read"
-                    : grade <= 9
-                      ? "Clear and accessible"
-                      : grade <= 12
-                        ? "Moderate complexity"
-                        : "Advanced reading level";
-                return `🧠 Clarity: ${clarity} (${words} words)`;
-              })()}
-            </div>
             <div className="flex flex-wrap gap-4 justify-center">
               <Button variant="outline" onClick={handleInterpret} disabled={interpretCount >= 5}>
                 Less Detailed
@@ -239,6 +219,26 @@ export default function Home() {
                   🔁 Tilder a New Article?
                 </Button>
               )}
+            </div>
+
+            <Card>
+              <CardContent className="p-6 whitespace-pre-wrap text-left text-lg">
+                {summary}
+              </CardContent>
+            </Card>
+            <div className="text-sm text-muted-foreground text-center">
+              {(() => {
+                const { grade, words } = analyzeReadability(summary);
+                const clarity =
+                  grade <= 7
+                    ? "Very easy to read"
+                    : grade <= 9
+                      ? "Clear and accessible"
+                      : grade <= 12
+                        ? "Moderate complexity"
+                        : "Advanced reading level";
+                return `🧠 Clarity: ${clarity} (${words} words)`;
+              })()}
             </div>
           </>
         )}
