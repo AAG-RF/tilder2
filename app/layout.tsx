@@ -12,6 +12,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+
 export const metadata = {
   title: "TiLDeR – Understand More by Reading Less",
   description: "Summarize any article in seconds using AI-powered clarity, insight, and brevity.",
