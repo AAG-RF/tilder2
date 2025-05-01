@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +16,14 @@ export default function Home() {
   const [length, setLength] = useState<number | null>(null);
   const [interpretCount, setInterpretCount] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [theme, setTheme] = useState("light");
+
+  useEffect(() => {
+    const match = window.matchMedia("(prefers-color-scheme: dark)");
+    setTheme(match.matches ? "dark" : "light");
+    match.addEventListener("change", e => setTheme(e.matches ? "dark" : "light"));
+    return () => match.removeEventListener("change", e => setTheme(e.matches ? "dark" : "light"));
+  }, []);
 
   const handleSummarize = async (wordLimit: number) => {
     setLoading(true);
@@ -31,9 +39,7 @@ export default function Home() {
         body: JSON.stringify({ url }),
       });
       const scrapeData = await scrapeRes.json();
-
       if (!scrapeRes.ok) throw new Error(scrapeData.error || "Failed to retrieve content.");
-
       const rawContent = scrapeData.content;
       setContent(rawContent);
       setStatusMessage("Content retrieved. Summarizing now...");
@@ -43,9 +49,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: rawContent, length: wordLimit }),
       });
-
       const summaryData = await summarizeRes.json();
-
       if (!summarizeRes.ok) throw new Error(summaryData.error || "Failed to summarize content.");
 
       setSummary(summaryData.summary);
@@ -62,12 +66,10 @@ export default function Home() {
 
   const handleInterpret = async () => {
     if (!summary) return;
-
     if (interpretCount >= 5) {
       setStatusMessage("🧱 We've hit semantic bedrock — this can't be simplified further without losing meaning.");
       return;
     }
-
     setLoading(true);
     setError("");
     setStatusMessage("Simplifying further...");
@@ -78,7 +80,6 @@ export default function Home() {
         body: JSON.stringify({ summary }),
       });
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error || "Interpretation failed.");
 
       setSummary(data.summary);
@@ -115,8 +116,8 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen w-full bg-gradient-to-br from-white to-gray-50 dark:from-black dark:to-neutral-900 text-center px-6 py-12 flex flex-col items-center justify-center gap-12">
-      <div className="w-full max-w-6xl space-y-6">
+    <main className="min-h-screen w-full bg-background text-foreground transition-colors px-6 py-12 flex flex-col items-center justify-center gap-12">
+      <div className="w-full max-w-6xl space-y-6 text-center">
         <h1 className="text-5xl font-bold tracking-tight sm:text-6xl">TiLDeR</h1>
         <p className="text-xl text-muted-foreground italic">Understand more by reading less.</p>
         <p className="text-md text-muted-foreground">
@@ -130,7 +131,7 @@ export default function Home() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
         />
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-4 justify-center">
           <Button onClick={() => handleSummarize(50)}>50 Words</Button>
           <Button onClick={() => handleSummarize(100)}>100 Words</Button>
           <Button onClick={() => handleSummarize(250)}>250 Words</Button>
@@ -139,8 +140,8 @@ export default function Home() {
       </div>
 
       <div className="w-full max-w-5xl space-y-4">
-        {statusMessage && <p className="text-blue-500 font-medium animate-pulse">{statusMessage}</p>}
-        {error && <p className="text-red-500 font-mono">⚠️ {error}</p>}
+        {statusMessage && <p className="text-blue-500 font-medium animate-pulse text-center">{statusMessage}</p>}
+        {error && <p className="text-red-500 font-mono text-center">⚠️ {error}</p>}
         {summary && (
           <>
             <Card>
@@ -159,7 +160,6 @@ export default function Home() {
                       : grade <= 12
                         ? "Moderate complexity"
                         : "Advanced reading level";
-
                 return `🧠 Clarity: ${clarity} (${words} words)`;
               })()}
             </div>
