@@ -21,10 +21,10 @@ async function fetchWithTimeout(resource: RequestInfo, options: RequestInit = {}
 }
 
 export async function POST(req: NextRequest) {
-    const { url, length } = await req.json();
+    const { url } = await req.json();
 
-    if (!url || !length) {
-        return NextResponse.json({ error: "Missing url or length" }, { status: 400 });
+    if (!url) {
+        return NextResponse.json({ error: "Missing URL." }, { status: 400 });
     }
 
     try {
@@ -50,39 +50,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "No content extracted from the page." }, { status: 500 });
         }
 
-        const openaiRes = await fetchWithTimeout("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-            },
-            body: JSON.stringify({
-                model: "gpt-4-0125-preview",
-                messages: [
-                    {
-                        role: "system",
-                        content: `You are a concise summarization assistant. Summarize the input into a maximum of ${length} words.`,
-                    },
-                    {
-                        role: "user",
-                        content,
-                    },
-                ],
-                temperature: 0.7,
-            }),
-        });
-
-        const openaiData = await openaiRes.json();
-        const summary = openaiData.choices?.[0]?.message?.content || "No summary available.";
-
-        return NextResponse.json({ summary });
+        return NextResponse.json({ content, status: "retrieved" });
     } catch (err: any) {
         if (err.name === "AbortError") {
             console.error("❌ Request timed out");
             return NextResponse.json({ error: "Request timed out. Please try again." }, { status: 504 });
         }
 
-        console.error("❌ Internal summarization error:", err);
+        console.error("❌ Content scrape error:", err);
         return NextResponse.json({ error: "An unexpected error occurred." }, { status: 500 });
     }
 }

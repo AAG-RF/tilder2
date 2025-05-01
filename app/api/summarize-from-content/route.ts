@@ -21,35 +21,13 @@ async function fetchWithTimeout(resource: RequestInfo, options: RequestInit = {}
 }
 
 export async function POST(req: NextRequest) {
-    const { url, length } = await req.json();
+    const { content, length } = await req.json();
 
-    if (!url || !length) {
-        return NextResponse.json({ error: "Missing url or length" }, { status: 400 });
+    if (!content || !length) {
+        return NextResponse.json({ error: "Missing content or length." }, { status: 400 });
     }
 
     try {
-        const firecrawlRes = await fetchWithTimeout("https://api.firecrawl.dev/v1/scrape", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${process.env.FIRECRAWL_API_KEY}`,
-            },
-            body: JSON.stringify({ url }),
-        });
-
-        const firecrawlData = await firecrawlRes.json();
-        const content =
-            firecrawlData?.content ||
-            firecrawlData?.extractedText ||
-            firecrawlData?.text ||
-            firecrawlData?.rawText ||
-            firecrawlData?.data?.markdown;
-
-        if (!content || content.length < 100) {
-            console.error("❌ Firecrawl empty or too short:", firecrawlData);
-            return NextResponse.json({ error: "No content extracted from the page." }, { status: 500 });
-        }
-
         const openaiRes = await fetchWithTimeout("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -82,7 +60,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Request timed out. Please try again." }, { status: 504 });
         }
 
-        console.error("❌ Internal summarization error:", err);
+        console.error("❌ Summarization error:", err);
         return NextResponse.json({ error: "An unexpected error occurred." }, { status: 500 });
     }
 }
