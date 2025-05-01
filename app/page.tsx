@@ -1,4 +1,5 @@
 "use client";
+
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { useState, useEffect } from "react";
@@ -13,7 +14,6 @@ export default function Home() {
   const [content, setContent] = useState("");
   const [error, setError] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
-  const [length, setLength] = useState<number | null>(null);
   const [interpretCount, setInterpretCount] = useState(0);
   const [copied, setCopied] = useState(false);
   const [theme, setTheme] = useState("light");
@@ -36,10 +36,9 @@ export default function Home() {
     return () => match.removeEventListener("change", listener);
   }, []);
 
-  const handleSummarize = async (wordLimit: number) => {
+  const handleSummarize = async () => {
     setSummary("");
     setError("");
-    setLength(wordLimit);
     setStatusMessage("Retrieving content from the page...");
 
     try {
@@ -107,31 +106,6 @@ export default function Home() {
     }
   };
 
-  const handleReason = async () => {
-    if (!content) return;
-    setStatusMessage("Analyzing content deeply...");
-    try {
-      const res = await fetch("/api/reasoning", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Reasoning failed.");
-
-      setSummary(data.summary);
-      setStatusMessage("");
-      setCopied(false);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Failed to reason over content.");
-      }
-      setStatusMessage("");
-    }
-  };
-
   const handleReset = () => {
     setUrl("");
     setSummary("");
@@ -139,7 +113,6 @@ export default function Home() {
     setError("");
     setStatusMessage("");
     setInterpretCount(0);
-    setLength(null);
     setCopied(false);
   };
 
@@ -183,10 +156,7 @@ export default function Home() {
           onChange={(e) => setUrl(e.target.value)}
         />
         <div className="flex flex-wrap gap-4 justify-center">
-          <Button onClick={() => handleSummarize(50)}>50 Words</Button>
-          <Button onClick={() => handleSummarize(100)}>100 Words</Button>
-          <Button onClick={() => handleSummarize(250)}>250 Words</Button>
-          <Button onClick={() => handleSummarize(500)}>500 Words</Button>
+          <Button onClick={handleSummarize}>🔍 Tilder This</Button>
         </div>
       </div>
 
@@ -196,19 +166,11 @@ export default function Home() {
         {summary && (
           <>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Button variant="outline" onClick={handleInterpret} disabled={interpretCount >= 5}>
-                Less Detailed
+              <Button variant="default" onClick={handleInterpret} disabled={interpretCount >= 5}>
+                🧠 TL;DR
               </Button>
-              {length !== 500 && (
-                <Button variant="outline" onClick={() => handleSummarize(500)}>
-                  More Detailed
-                </Button>
-              )}
               <Button variant="outline" onClick={handleCopy}>
                 {copied ? "✅ Copied" : "📋 Copy Summary"}
-              </Button>
-              <Button variant="outline" onClick={handleReason}>
-                🤔 Extract Key Insights
               </Button>
               {interpretCount >= 5 && (
                 <Button
@@ -220,7 +182,6 @@ export default function Home() {
                 </Button>
               )}
             </div>
-
             <Card>
               <CardContent className="p-6 whitespace-pre-wrap text-left text-lg">
                 {summary}
