@@ -11,7 +11,6 @@ export default function Home() {
   const [summary, setSummary] = useState("");
   const [content, setContent] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [length, setLength] = useState<number | null>(null);
   const [interpretCount, setInterpretCount] = useState(0);
@@ -37,7 +36,6 @@ export default function Home() {
   }, []);
 
   const handleSummarize = async (wordLimit: number) => {
-    setLoading(true);
     setSummary("");
     setError("");
     setLength(wordLimit);
@@ -67,11 +65,13 @@ export default function Home() {
       setStatusMessage("");
       setInterpretCount(0);
       setCopied(false);
-    } catch (err: any) {
-      setError(err.message || "Unexpected error.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Unexpected error.");
+      }
       setStatusMessage("");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -81,7 +81,6 @@ export default function Home() {
       setStatusMessage("🧱 We've hit semantic bedrock — this can't be simplified further without losing meaning.");
       return;
     }
-    setLoading(true);
     setError("");
     setStatusMessage("Simplifying further...");
     try {
@@ -97,17 +96,18 @@ export default function Home() {
       setInterpretCount(prev => prev + 1);
       setStatusMessage("");
       setCopied(false);
-    } catch (err: any) {
-      setError(err.message || "Failed to interpret summary.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to interpret summary.");
+      }
       setStatusMessage("");
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleReason = async () => {
     if (!content) return;
-    setLoading(true);
     setStatusMessage("Analyzing content deeply...");
     try {
       const res = await fetch("/api/reasoning", {
@@ -121,11 +121,13 @@ export default function Home() {
       setSummary(data.summary);
       setStatusMessage("");
       setCopied(false);
-    } catch (err: any) {
-      setError(err.message || "Failed to reason over content.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to reason over content.");
+      }
       setStatusMessage("");
-    } finally {
-      setLoading(false);
     }
   };
 
