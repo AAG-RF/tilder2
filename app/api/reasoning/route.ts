@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
                 },
                 { role: "user", content },
             ],
-            store: true,
+            store: false,
         });
 
         const summary =

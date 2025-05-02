@@ -1,40 +1,40 @@
 "use server";
 
 import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+});
 
 export async function POST(req: NextRequest) {
     const { summary } = await req.json();
-
-    if (!summary) {
-        return NextResponse.json({ error: "Missing summary content." }, { status: 400 });
+    if (!summary || summary.length < 125) {
+        return NextResponse.json(
+            { error: "Insufficient content for simplification." },
+            { status: 400 },
+        );
     }
 
     try {
-        const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-            },
-            body: JSON.stringify({
-                model: "gpt-3.5-turbo-0125",
-                messages: [
-                    {
-                        role: "system",
-                        content:
-                            "You are a simplification assistant. Rewrite the provided summary to make it easier to understand by a general audience without removing names, dates, brands, or factual content. Use plain English, short sentences, and aim for a reading level of around year 9.",
-                    },
-                    {
-                        role: "user",
-                        content: summary,
-                    },
-                ],
-                temperature: 0.4,
-            }),
+        const completion = await openai.chat.completions.create({
+            model: "o4-mini",
+            reasoning_effort: "medium",
+            messages: [
+                {
+                    role: "system",
+                    content:
+                        "You are a simplification assistant. Rewrite the provided summary to make it easier to understand by a general audience without removing names, dates, brands, or factual content. Use plain English, short sentences, and aim for a reading level of around year 9. Attempt to reduce the total length of the content while preserving all meaningful context.",
+                },
+                {
+                    role: "user",
+                    content: summary,
+                },
+            ],
+            store: false,
         });
 
-        const openaiData = await openaiRes.json();
-        const interpreted = openaiData.choices?.[0]?.message?.content || "No simplified version available.";
+        const interpreted = completion.choices?.[0]?.message?.content?.trim() || "No simplified version available.";
 
         return NextResponse.json({ summary: interpreted });
     } catch (err: unknown) {
@@ -44,5 +44,4 @@ export async function POST(req: NextRequest) {
         }
         return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
     }
-
 }
