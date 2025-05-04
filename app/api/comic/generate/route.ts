@@ -45,7 +45,6 @@ Instructions:
             quality: "high",
             output_format: "png",
             output_compression: 70,
-            response_format: "b64_json",
             // headers: { "User-Agent": "tilder/0.2 (comic-renderer)" } // optional
         });
 
