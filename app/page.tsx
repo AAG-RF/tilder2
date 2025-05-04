@@ -16,6 +16,7 @@ export default function Home() {
   const [interpretCount, setInterpretCount] = useState(0);
   const [copied, setCopied] = useState(false);
   const [theme, setTheme] = useState("light");
+  const [comicImage, setComicImage] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("tilder-theme");
@@ -38,35 +39,36 @@ export default function Home() {
   const handleSummarize = async () => {
     setSummary("");
     setError("");
+    setComicImage(null);
     setStatusMessage("Retrieving content from the page...");
-  
+
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
-  
+    const timeout = setTimeout(() => controller.abort(), 30000);
+
     try {
       const scrapeRes = await fetch("/api/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       });
-  
+
       const scrapeData = await scrapeRes.json();
       if (!scrapeRes.ok) throw new Error(scrapeData.error || "Failed to retrieve content.");
       const rawContent = scrapeData.content;
       setStatusMessage("Content retrieved. Extracting key insights...");
-  
+
       const reasoningRes = await fetch("/api/reasoning", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: rawContent }),
         signal: controller.signal,
       });
-  
+
       clearTimeout(timeout);
-  
+
       const reasoningData = await reasoningRes.json();
       if (!reasoningRes.ok) throw new Error(reasoningData.error || "Reasoning failed.");
-  
+
       setSummary(reasoningData.summary);
       setStatusMessage("");
       setInterpretCount(0);
@@ -74,7 +76,7 @@ export default function Home() {
     } catch (err: unknown) {
       clearTimeout(timeout);
       if (err instanceof DOMException && err.name === "AbortError") {
-        setError("⏱ This article took too long to analyze. Perhaps it is too large to process? Try a shorter page until I can find a way around this limitation");
+        setError("⏱ This article took too long to analyze. Try a shorter page until this can be improved.");
       } else if (err instanceof Error) {
         setError(err.message);
       } else {
@@ -115,6 +117,40 @@ export default function Home() {
     }
   };
 
+  const handleVisualizeComic = async () => {
+    if (!summary || interpretCount < 3) return;
+    setStatusMessage("Interpreting content...");
+    setError("");
+    try {
+      const scriptRes = await fetch("/api/comic/interpret", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ summary }),
+      });
+      const scriptData = await scriptRes.json();
+      if (!scriptRes.ok) throw new Error(scriptData.error || "Comic script generation failed.");
+
+      setStatusMessage("Generating comic visuals...");
+      const imageRes = await fetch("/api/comic/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ script: scriptData.script }),
+      });
+      const imageData = await imageRes.json();
+      if (!imageRes.ok) throw new Error(imageData.error || "Image generation failed.");
+
+      setComicImage(`data:image/png;base64,${imageData.image}`);
+      setStatusMessage("");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to generate comic.");
+      }
+      setStatusMessage("");
+    }
+  };
+
   const handleReset = () => {
     setUrl("");
     setSummary("");
@@ -122,6 +158,7 @@ export default function Home() {
     setStatusMessage("");
     setInterpretCount(0);
     setCopied(false);
+    setComicImage(null);
   };
 
   const handleCopy = async () => {
@@ -171,15 +208,28 @@ export default function Home() {
       <div className="w-full max-w-5xl space-y-4">
         {statusMessage && <p className="text-blue-500 font-medium animate-pulse text-center">{statusMessage}</p>}
         {error && <p className="text-red-500 font-mono text-center">⚠️ {error}</p>}
+        {comicImage && (
+          <div className="flex flex-col items-center gap-4">
+            <img src={comicImage} alt="Comic Strip" className="rounded shadow-lg max-w-full" />
+            <a href={comicImage} download="tilder_comic.png">
+              <Button variant="outline">📥 Download Comic</Button>
+            </a>
+          </div>
+        )}
         {summary && (
           <>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Button variant="default" onClick={handleInterpret} disabled={interpretCount >= 5}>
+              <Button variant="default" onClick={handleInterpret} disabled={interpretCount >= 5 || comicImage !== null}>
                 🧠 TL;DR
               </Button>
               <Button variant="outline" onClick={handleCopy}>
                 {copied ? "✅ Copied" : "📋 Copy Summary"}
               </Button>
+              {interpretCount >= 3 && !comicImage && (
+                <Button variant="outline" onClick={handleVisualizeComic}>
+                  🖼️ Visualise as Comic
+                </Button>
+              )}
               {interpretCount >= 5 && (
                 <Button
                   variant="outline"

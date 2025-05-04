@@ -1,6 +1,6 @@
 # TiLDeR Project Architecture Notes
 
-> A living snapshot of current system architecture, routes, features, and UI behavior — as of May 1, 2025.
+> A living snapshot of current system architecture, routes, features, and UI behavior — as of May 4, 2025.
 
 ---
 
@@ -20,19 +20,30 @@ A minimalist, high-clarity AI summarization tool that:
 - Calls Firecrawl API
 - Retrieves page content
 - Extracts from `.content`, `.extractedText`, `.data.markdown`, etc.
-- Handles timeouts
+- Handles timeouts and fallbacks
 
 ### `/api/reasoning`
 - POSTs full article content to OpenAI Reasoning endpoint
 - Uses `o4-mini` model
-- Applies `reasoning_effort: "high"`
+- Applies `reasoning_effort: "medium"`
+- System prompt: "You are a critical-thinking assistant..."
 - Returns core insight distillation (not summarization)
 
 ### `/api/interpretation`
 - Accepts already-returned summary
-- Performs gradual semantic simplification
+- Uses `o4-mini` model
+- Applies `reasoning_effort: "medium"`
+- System prompt: "You are a simplification assistant..."
+- Performs iterative semantic simplification
 - Max 5 iterations per summary
 - Returns simplified version each time ("TL;DR")
+
+### `/api/comic`
+- NEW route
+- Uses `o4-mini` model
+- Converts summarized content into structured 4-panel comic prompts
+- Each panel includes visual metaphors and caption text
+- System prompt: "You are a visual storytelling assistant..."
 
 ---
 
@@ -48,10 +59,6 @@ A minimalist, high-clarity AI summarization tool that:
 - **"📋 Copy Summary"** → uses `navigator.clipboard`
 - **"🔁 Tilder a New Article?"** → resets form when simplification limit is hit
 
-### Removed from UI
-- Word count buttons (50/100/250/500)
-- Extract Key Insights (merged into primary flow)
-
 ### Integrated
 - `@vercel/analytics/react` and `@vercel/speed-insights/next`
 - `readability.ts` returns grade-level + word count
@@ -61,23 +68,16 @@ A minimalist, high-clarity AI summarization tool that:
 
 ## 🔐 Domain & Hosting
 - Hosted via Vercel
-- Custom domain connected (CNAME + A/AAAA if required)
+- Custom domain connected
 - Error pages, redirects, and metadata in place
+- Long-running API calls now support up to 30s timeout handling
 
 ---
 
 ## 🚧 Outstanding / In Progress
 - [ ] Session history (local, no-auth)
-- [ ] Better progress indicator during slow responses (>15s)
-- [ ] Retry logic or queued extraction
-- [ ] Fallback or offline experience
-
----
-
-## 🧾 Notes
-- You’ve optimized for clarity, polish, and graceful degradation.
-- The reasoning endpoint significantly outperforms summarization for depth.
-- All simplification respects semantic boundaries.
+- [ ] Comic image generation route via DALL·E-3
+- [ ] Optional "Validate via Secondary Sources" prototype
 
 ---
 
