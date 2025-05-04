@@ -9,6 +9,7 @@ A minimalist, high-clarity AI summarization tool that:
 - Scrapes article content from URLs
 - Extracts dense insights using advanced reasoning
 - Offers optional simplification ("TL;DR")
+- Visualizes summaries as comic strips for better engagement
 - Works without ads, distractions, or auth
 - Deploys live via Vercel with custom domain
 
@@ -20,30 +21,32 @@ A minimalist, high-clarity AI summarization tool that:
 - Calls Firecrawl API
 - Retrieves page content
 - Extracts from `.content`, `.extractedText`, `.data.markdown`, etc.
-- Handles timeouts and fallbacks
+- Handles timeouts
 
 ### `/api/reasoning`
 - POSTs full article content to OpenAI Reasoning endpoint
 - Uses `o4-mini` model
-- Applies `reasoning_effort: "medium"`
-- System prompt: "You are a critical-thinking assistant..."
+- Applies `reasoning_effort: "high"`
 - Returns core insight distillation (not summarization)
 
 ### `/api/interpretation`
 - Accepts already-returned summary
 - Uses `o4-mini` model
-- Applies `reasoning_effort: "medium"`
-- System prompt: "You are a simplification assistant..."
-- Performs iterative semantic simplification
+- Applies `reasoning_effort: "high"`
+- Performs gradual semantic simplification
 - Max 5 iterations per summary
 - Returns simplified version each time ("TL;DR")
 
-### `/api/comic`
-- NEW route
-- Uses `o4-mini` model
-- Converts summarized content into structured 4-panel comic prompts
-- Each panel includes visual metaphors and caption text
-- System prompt: "You are a visual storytelling assistant..."
+### `/api/comic/interpret`
+- Accepts a cleaned-up summary
+- Uses `o4-mini` with visual storytelling system prompt
+- Returns a four-panel comic-style visual script, one panel per core insight
+
+### `/api/comic/generate`
+- Accepts `script` from comic/interpret
+- Calls `gpt-image-1` model to generate a horizontal strip comic
+- Uses clean, editorial cartoon prompt
+- Returns base64-encoded PNG image
 
 ---
 
@@ -51,13 +54,18 @@ A minimalist, high-clarity AI summarization tool that:
 
 - Dark/light theme toggle with `localStorage` persistence
 - Responsive layout using TailwindCSS
-- Status messages (e.g., "Retrieving content...", "Simplifying...")
+- Status messages (e.g., "Retrieving content...", "Simplifying...", "Generating comic visuals...")
 
 ### Key Buttons
 - **"🔍 Tilder This"** → triggers scrape + reasoning
-- **"🧠 TL;DR"** → triggers interpretation
+- **"🧠 TL;DR"** → triggers semantic interpretation (disabled after 5 calls)
 - **"📋 Copy Summary"** → uses `navigator.clipboard`
-- **"🔁 Tilder a New Article?"** → resets form when simplification limit is hit
+- **"🖼️ Visualise as Comic"** → triggers `/comic/interpret` then `/comic/generate` (unlocked after 3 TL;DR calls)
+- **"🔁 Tilder a New Article?"** → resets form
+
+### Comic Output
+- Displayed above summary card
+- Includes download link for image
 
 ### Integrated
 - `@vercel/analytics/react` and `@vercel/speed-insights/next`
@@ -68,16 +76,17 @@ A minimalist, high-clarity AI summarization tool that:
 
 ## 🔐 Domain & Hosting
 - Hosted via Vercel
-- Custom domain connected
-- Error pages, redirects, and metadata in place
-- Long-running API calls now support up to 30s timeout handling
+- Preview deployments via `dev` branch
+- `main` branch serves production
+- `.vercel.json` in use to extend function timeout on image generation routes
 
 ---
 
 ## 🚧 Outstanding / In Progress
 - [ ] Session history (local, no-auth)
-- [ ] Comic image generation route via DALL·E-3
-- [ ] Optional "Validate via Secondary Sources" prototype
+- [ ] Add "Flavor Summaries" (e.g. Gen Z, Boomer, Jeff Bezos mode)
+- [ ] Async job queue for image generation (to avoid timeout)
+- [ ] Toast message for async return when available
 
 ---
 
