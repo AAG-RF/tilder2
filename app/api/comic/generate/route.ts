@@ -43,10 +43,10 @@ Instructions:
             prompt,
             size: "1536x1024",
             quality: "high",
-            output_format: "png",
+            output_format: "jpeg", // ✅ allows compression
             output_compression: 70,
-            // headers: { "User-Agent": "tilder/0.2 (comic-renderer)" } // optional
         });
+        
 
         clearTimeout(timeout);
 
