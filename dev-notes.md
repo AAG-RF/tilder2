@@ -1,6 +1,6 @@
 # TiLDeR Project Architecture Notes
 
-> A living snapshot of current system architecture, routes, features, and UI behavior — as of May 1, 2025.
+> A living snapshot of current system architecture, routes, features, and UI behavior — as of May 4, 2025.
 
 ---
 
@@ -9,6 +9,7 @@ A minimalist, high-clarity AI summarization tool that:
 - Scrapes article content from URLs
 - Extracts dense insights using advanced reasoning
 - Offers optional simplification ("TL;DR")
+- Visualizes summaries as comic strips for better engagement
 - Works without ads, distractions, or auth
 - Deploys live via Vercel with custom domain
 
@@ -30,9 +31,22 @@ A minimalist, high-clarity AI summarization tool that:
 
 ### `/api/interpretation`
 - Accepts already-returned summary
+- Uses `o4-mini` model
+- Applies `reasoning_effort: "high"`
 - Performs gradual semantic simplification
 - Max 5 iterations per summary
 - Returns simplified version each time ("TL;DR")
+
+### `/api/comic/interpret`
+- Accepts a cleaned-up summary
+- Uses `o4-mini` with visual storytelling system prompt
+- Returns a four-panel comic-style visual script, one panel per core insight
+
+### `/api/comic/generate`
+- Accepts `script` from comic/interpret
+- Calls `gpt-image-1` model to generate a horizontal strip comic
+- Uses clean, editorial cartoon prompt
+- Returns base64-encoded PNG image
 
 ---
 
@@ -40,17 +54,18 @@ A minimalist, high-clarity AI summarization tool that:
 
 - Dark/light theme toggle with `localStorage` persistence
 - Responsive layout using TailwindCSS
-- Status messages (e.g., "Retrieving content...", "Simplifying...")
+- Status messages (e.g., "Retrieving content...", "Simplifying...", "Generating comic visuals...")
 
 ### Key Buttons
 - **"🔍 Tilder This"** → triggers scrape + reasoning
-- **"🧠 TL;DR"** → triggers interpretation
+- **"🧠 TL;DR"** → triggers semantic interpretation (disabled after 5 calls)
 - **"📋 Copy Summary"** → uses `navigator.clipboard`
-- **"🔁 Tilder a New Article?"** → resets form when simplification limit is hit
+- **"🖼️ Visualise as Comic"** → triggers `/comic/interpret` then `/comic/generate` (unlocked after 3 TL;DR calls)
+- **"🔁 Tilder a New Article?"** → resets form
 
-### Removed from UI
-- Word count buttons (50/100/250/500)
-- Extract Key Insights (merged into primary flow)
+### Comic Output
+- Displayed above summary card
+- Includes download link for image
 
 ### Integrated
 - `@vercel/analytics/react` and `@vercel/speed-insights/next`
@@ -61,23 +76,17 @@ A minimalist, high-clarity AI summarization tool that:
 
 ## 🔐 Domain & Hosting
 - Hosted via Vercel
-- Custom domain connected (CNAME + A/AAAA if required)
-- Error pages, redirects, and metadata in place
+- Preview deployments via `dev` branch
+- `main` branch serves production
+- `.vercel.json` in use to extend function timeout on image generation routes
 
 ---
 
 ## 🚧 Outstanding / In Progress
 - [ ] Session history (local, no-auth)
-- [ ] Better progress indicator during slow responses (>15s)
-- [ ] Retry logic or queued extraction
-- [ ] Fallback or offline experience
-
----
-
-## 🧾 Notes
-- You’ve optimized for clarity, polish, and graceful degradation.
-- The reasoning endpoint significantly outperforms summarization for depth.
-- All simplification respects semantic boundaries.
+- [ ] Add "Flavor Summaries" (e.g. Gen Z, Boomer, Jeff Bezos mode)
+- [ ] Async job queue for image generation (to avoid timeout)
+- [ ] Toast message for async return when available
 
 ---
 
